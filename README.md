@@ -61,7 +61,7 @@ cat urls.txt | xargs url-open
 
 -end
     End index (exclusive). Values <= 0 mean the end of the input.
-    Default: 32.
+    Default: -1.
 
 -batch
     Number of URLs to open in each batch. Default: 1.
