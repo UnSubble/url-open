@@ -16,6 +16,9 @@ func main() {
 	endFlag := flag.Int("end", -1, "end index (exclusive, [index <= 0] = last)")
 	batchFlag := flag.Int("batch", 1, "number of URLs to open in each batch")
 
+	http := flag.Bool("http", false, "prepend http:// to URLs without a scheme")
+	domain := flag.Bool("domain", false, "extract domain from URLs")
+
 	versionFlag := flag.Bool("V", false, "print version")
 	verbose := flag.Bool("v", false, "enable verbose output")
 
@@ -65,7 +68,7 @@ func main() {
 			return nil
 		}
 
-		if err := openBatch(b, batch, *verbose); err != nil {
+		if err := openBatch(b, batch, *domain, *http, *verbose); err != nil {
 			return err
 		}
 
@@ -80,17 +83,29 @@ func main() {
 	}
 
 	if len(batch) > 0 {
-		if err := openBatch(b, batch, *verbose); err != nil {
+		if err := openBatch(b, batch, *domain, *http, *verbose); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 	}
 }
 
-func openBatch(b *browser.Browser, urls []string, verbose bool) error {
+func openBatch(b *browser.Browser, urls []string, domain, http, verbose bool) error {
 	for _, url := range urls {
+		if http {
+			url = normalizeURL(url)
+		}
+
+		if domain {
+			var err error
+			url, err = extractDomain(url)
+			if err != nil {
+				return err
+			}
+		}
+
 		if verbose {
-			fmt.Printf("opening %s\n...", url)
+			fmt.Printf("opening %s...\n", url)
 		}
 
 		if err := b.Open(url); err != nil {
